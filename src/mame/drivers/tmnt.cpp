@@ -2113,7 +2113,7 @@ static MACHINE_CONFIG_START( punkshot, tmnt_state )
 	MCFG_K051960_SCREEN_TAG("screen")
 	MCFG_K051960_CB(tmnt_state, punkshot_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
@@ -2168,7 +2168,7 @@ static MACHINE_CONFIG_START( lgtnfght, tmnt_state )
 	MCFG_K05324X_OFFSETS(0, 0)
 	MCFG_K05324X_CB(tmnt_state, lgtnfght_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
@@ -2228,7 +2228,7 @@ static MACHINE_CONFIG_START( blswhstl, tmnt_state )
 	MCFG_K05324X_OFFSETS(0, 0)
 	MCFG_K05324X_CB(tmnt_state, blswhstl_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 	MCFG_K054000_ADD("k054000")
 
 	/* sound hardware */
@@ -2309,7 +2309,7 @@ static MACHINE_CONFIG_START( glfgreat, tmnt_state )
 	MCFG_K053936_WRAP(1)
 	MCFG_K053936_OFFSETS(85, 0)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
@@ -2376,7 +2376,7 @@ static MACHINE_CONFIG_START( prmrsocr, tmnt_state )
 	MCFG_DEVICE_ADD("k053936", K053936, 0)
 	MCFG_K053936_OFFSETS(85, 1)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
@@ -2440,7 +2440,7 @@ static MACHINE_CONFIG_START( tmnt2, tmnt_state )
 	MCFG_K05324X_OFFSETS(0, 0)
 	MCFG_K05324X_CB(tmnt_state, lgtnfght_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
@@ -2499,7 +2499,7 @@ static MACHINE_CONFIG_START( ssriders, tmnt_state )
 	MCFG_K05324X_OFFSETS(0, 0)
 	MCFG_K05324X_CB(tmnt_state, lgtnfght_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
@@ -2550,7 +2550,7 @@ static MACHINE_CONFIG_START( sunsetbl, tmnt_state )
 	MCFG_K05324X_OFFSETS(0, 0)
 	MCFG_K05324X_CB(tmnt_state, lgtnfght_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
@@ -2599,7 +2599,7 @@ static MACHINE_CONFIG_START( thndrx2, tmnt_state )
 	MCFG_K051960_SCREEN_TAG("screen")
 	MCFG_K051960_CB(tmnt_state, thndrx2_sprite_callback)
 
-	MCFG_K053251_ADD("k053251")
+	MCFG_K053251_ADD("k053251", k053251_device::LAYER1_ATTR)
 
 	MCFG_K054000_ADD("k054000")
 
