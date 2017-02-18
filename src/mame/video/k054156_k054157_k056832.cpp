@@ -45,7 +45,7 @@ address lines allow to reduce the size of the grid (and the amount of
 ram required).  Actual seen sizes are 2x2, 2x4 and 4x4.  Each layer is
 of course scrollable independently, with possibilities of line and
 8-line block scrolling using data from a user-selected page. The
-number of actually generated layers can be chosen between 2 and 4.
+number of actually generated layers can be chosen as either 2 or 4.
 
 The character roms are setup so that one address, ignoring the low
 bit, corresponds to a 8x1 pixel span whatever the bpp.  So the first
@@ -105,20 +105,13 @@ is visible in the address space, and can be setup to be accessed
 efficiently as bytes, words or dwords.  Efficient in that case means
 that each consecutive address accesses consecutive tiles.  E.g. in
 byte mode adr and adr+1 refers to two consecutive tiles, in word mode
-adr and adr+2 do, and in dword mode adr and adr+4 do.  WHen one access
+adr and adr+2 do, and in dword mode adr and adr+4 do.  When one access
 is not enough for all the tile bits, the rest of the data is at a
 fixed offset (0x800 or 0x1000).
 
 
 The 058143 adds enough address lines to allow for linear access to the
 whole vram.  It is probably 24-bits vram, dword access only.
-
-
-Finally, the 054156 can generate the sync signals for fixed video
-configurations, and the associated interrupts.  It just has to be
-provided with a 6MHz dotclock for 288x224 or a 8Mhz one for 384x224
-(or maybe 384x256, not sure).
-
 
 
 VRAM layout:
@@ -183,18 +176,18 @@ dms: 0=four layers, 1=two layers
 [a-d]f[hv]: 1=bit for horizontal/vertical character flipping present in layer a-d
 cr: 00=normal mode, 11=read character rom more, other unknown (used for character ram access)
 sb: 000 = banking disabled
-	001 = banking keyed on bits b,a of the character code
+    001 = banking keyed on bits b,a of the character code
     010 = banking keyed on bits 9,8 of the character code
     100 = banking keyed on bits f,e of the character code
 fb: indicates which bits are used for character flipping in vram
-	offset = 8 for 16-bits vram, 16 for 24-bits vram
-	bit (3-val)*2+1+offset for vflip
-	bit (3-val)*2+  offset for hflip
-	bit is active if enabled in reg2
+    offset = 8 for 16-bits vram, 16 for 24-bits vram
+    bit (3-val)*2+1+offset for vflip
+    bit (3-val)*2+  offset for hflip
+    bit is active if enabled in reg2
     active bits are removed from the palette value
 8b:  1 = ignore bits 8-15 of the data bus, the cpu is 8-bits.
 opt: 1 = vram is 24bits wide, 0 = vram is 16bits wide
-zrm: 0 = external ram for raster scroll present? Use and/or interaction with ex unknown
+zrm: 0 = external ram for raster scroll present? Use and/or interaction with ez unknown
 h[a-d]s: scroll mode setting, 0=asynchronous, 1=syncronous, impact unknown
 md[a-d]: 0 = characters for the layer are 512x1, 1 = characters are 8x8
 sc[a-d]: scroll mode, 0=linescroll, 2=8-line block linescroll, 1/3=normal scroll
@@ -210,152 +203,135 @@ vrc: 4-bits bank values, indexed on the bits chosen with sb
 off[vh]: offset added to the layer scrolls when flipped
 
 
-[Except for tilemap sizes, all numbers are in hex]
-
-These work in pairs.  Similar in principle to the 052109/051962, they
-manage 4 64x32 or 64x64 tilemaps.  They also handle linescroll on each
-layer, and optional tile banking.  They use 4000 to 10000 bytes of
-RAM, organized in 1000 or 2000 bytes banks.
-
-The 56832 is a complete superset of the 54157 and supports higher color
-depths (the 156/157 combo only goes to 5 bpp, the 156/832 combo goes to 8bpp).
-
-These chips work in a fairly unusual way.  There are 4, 8, or 16 pages of VRAM, arranged
-conceptually in a 4x4 2 dimensional grid.  Each page is a complete 64x32 tile tilemap.
-
-The 4 physical tilemaps A, B, C, and, D are made up of these pages "glued together".
-Each physical tilemap has an X and Y position in the 4x4 page grid indicating where
-the page making up its upper left corner is, as well as a width and height in pages.
-If two tilemaps try to use the same page, the higher-letter one wins and the lower-letter
-one is disabled completely.  E.g. A > B > C > D, so if A and B both try to use the
-same page only A will be displayed.  Some games rely on this behavior to implicitly
-disable tilemaps which otherwise should be displayed.
-
-Tile encoding 2 bytes/tile (banks of 1000 bytes):
-        pppx bbcc cccc cccc
-  p = color palette
-  x = flip x
-  b = tile bank (0..3)
-  c = tile code (0..3ff)
+Scrolling is done independently per-layer.  Vertical scrolling is
+controlled by the m?v registers.  Horizontal scolling uses one of
+three modes: standard full-layer scrolling, linescroll and scroll by
+8-line blocks according to the sc? register.  Full-layer scrolling
+position is controller by m?h.  Linescroll and 8-line block scroll
+uses either a page or external dedicated ram to store the positions.
+There are 4x512 (0x800) positions, 512 for each layer, using exactly
+one page.  The positions are indexed by the tilemap line numbers and
+the layer number, the vertical scroll position has no influence.  In
+8-line mode, holes are left between each position (e.g. the IC zeroes
+the three bottom address bits when reading the offset).
 
 
-Tile encoding 4 bytes/tile (banks of 2000 bytes):
-        ---- ---- pppp --yx  cccc cccc cccc cccc
-  p = color palette
-  x = flip x
-  y = flip y
-  b = tile bank (0..3)
-  c = tile code (0..3ff)
+The 054156 can generate the sync signals for fixed video configurations,
+and the associated interrupts.  It just has to be provided with a 6MHz
+dotclock for 288x224 or a 8Mhz one for 384x224 (or maybe 384x256, not
+sure).
 
 
-Communication with these ics go through 4 memory zones:
-  1000/2000 bytes: access to the currently selected ram bank
-       2000 bytes: readonly access to the currently selected tile
-                   rom bank for rom checksumming
-         40 bytes: writeonly access to the first register bank
-          8 bytes: writeonly access to the second register bank
+Global layer positioning on the screen is a complex but critical
+issue.  When connected to an external sync generator, like the 053252,
+the 054156 only gets the horizontal and vertical sync signals.  For
+each screen line the 054156 must decide which tilemap line to display,
+then within that line which tiles to get, in which order (increasing
+or decreasing memory order), and when to start (for pixel-level
+horizontal scrolling).  Clipping is done aggressively by the external
+video blanking circuit, which is controlled by the sync generator,
+internal or external.  So positioning has to be precise, otherwise the
+screen will be cut.  There's no overscan to be had.
 
-One of the register banks is probably on the 054156, and the other on
-the 054157.
+But, when external, the 054156 has noaccess to the blanking signal, so
+all positioning is relative to sync.  In addition the global flipping
+bits have to be taken into account.  They invert the screen, but how
+is not defined.  Offsets in registers offv/offh are automatically
+included in the current scrolling position when the associated global
+flip is active, but how is not documented, only some specific values
+are given.  It is expected that every game sets them so that the
+actual viewport doesn't change when flipping.
 
-First register bank map (offsets in bytes, '-' means unused):
-00    ---- ---- ??yx ????
-  flip control
+Vertical position model: we need to determine how the circuit goes
+from a screen line number to a tilemap line number.  We set screen
+line number 0 at the start of the back porch (end of vsync).
 
-02    ---- ---- ???? ????
-  unknown
+From a panel of games, we note whether sync is internal or external,
+the visible screen height, visible screen start position, vsync line
+count (just in case), vertical offset value, vertical scroll value,
+tilemap line of the first visible pixel and height of the tilemap
+layer.  All values in hex.
 
-04    ---- ---- ???? ????
-  unknown (bit 1 may be bank count selection, 0 in xexex, 1 everywhere
-  else)
-
-06    ---- ---- ???? ???e
-  enable irq
-
-08    ---- ---- ???? ????
-  unknown
-
-0a    ---- ---- 3322 1100
-  linescroll control, each pair of bits indicates the mode for the
-  corresponding layer:
-    0: per-line linescroll
-    1: unused/unknown
-    2: per-8 lines linescroll
-    3: no linescroll
-
-0c    ---- ---- ???? ????
-  unknown (bit 1 may be bank size selection, 1 in asterix, 0 everywhere
-  else)
-
-0e    ---- ---- ---- ----
-
-10-13 ---- ---- ---y y-hh
-   layer Y position in the VRAM grid and height in pages
-
-14-17 ---- ---- ---x x-ww
-   layer X position in the VRAM grid and width in pages
-18-1f ---- ---- ???? ????
-
-20-27 yyyy yyyy yyyy yyyy
-  scroll y position for each layer
-
-28-2f xxxx xxxx xxxx xxxx
-  scroll x position for each layer
-
-30    ---- ---- ---b b--b
-  linescroll ram bank selection
-
-32    ---- ---- ---b b--b
-  cpu-accessible ram bank selection
-
-34    bbbb bbbb bbbb bbbb
-  rom bank selection for checksumming (each bank is 0x2000 bytes)
-
-36    ---- ---- ---- bbbb
-  secondary rom bank selection for checksumming when tile banking is
-  used
-
-38    3333 2222 1111 0000
-  tile banking look up table.  4 bits are looked up here for the two
-  bits in the tile data.
-
-3a    ???? ???? ???? ????
-  unknown
-
-3c    ???? ???? ???? ????
-  unknown
-
-3e    ---- ---- ---- ----
+Orig | Height | Visible | Vsync | Voff | Scroll | TilePos | THeight | Game
+ext  |     e0 |       f |     8 |  700 |   fff0 |       0 | 100/200 | gokuparo
+ext  |    100 |       f |     6 |  720 |   7ff0 |       0 | 100/200 | xexex
+int  |     e0?|       f?|     8?|  700 |      0 |      10 |     100 | gijoe
 
 
-Second register bank map:
-00    ---- ---- ???? ????
-  unknown
+Observations:
+  - Vsync duration doesn't seem to have any impact.
 
-02-07 are copies of the 02-07 registers from the first bank.
+  - An increasing scroll value scrolls the screen up, which means
+    increasing the tilemap line number, whatever the flip value.
+
+  - Voff is there to ensure that the top visible screen line hits the
+    bottom line of the visible zone of the tilemap when flipped.  So
+    everything else being equal, an increase of the height requires a
+    biggest increment through Voff.  We see that Voff goes from 700 to
+    720 when the height goes from e0 to 100, so Voff is added.
+
+  - When non-flipped, the tilemap line must increase with the screen
+    line number.  When flipped, the tilemap line must decrease with
+    the screen line number.
+
+  - Tilemap line number wraps with the tilemap height
+
+So the screen -> tile line formula takes the form:
+   ty = ( sy + scroll +        offv1) & (th-1) (non-flipped)
+      = (-sy + scroll + Voff + offv2) & (th-1) (flipped)
+
+Now, in gokuparo's case, the first visible line (sy=f) must hit the
+first tilemap line (ty=0) when non-flipped, and the last (ty=df) when
+flipped.
+
+  (  f + fff0 + offv1) & ff == 0
+  ( -f + fff0 + 700 + offv2) & ff == df
+
+  -> offv1 = 1, offv2 = -2
+
+But we can do a little better.  For the flipped case, we get:
+  ty = (-sy - 2 + scroll + Voff) & (th-1)
+     = (~sy - 1 + scroll + Voff) & (th-1)
+     = (~(sy + 1) + scroll + Voff) & (th-1)
+
+which allows to factor in the same offset than for the non-flipped
+case.  So we get for the final computation:
+
+- Take the screen line number, add 1 (e.g. it's a 1-based count, not a
+  0-base one)
+- Invert the value if flipped
+- Add the scroll register value
+- If flipped, add Voff
+- Mask with the tilemap size
+
+That process has the advantage of requiring only an incrementer, an
+inverter and two adders, all easy in hardware.
+
+Verification:
+   gokuparo (visible range f..ee, tilemap range 0..df):
+     non-flipped, at visible:  ((f+1) + fff0) & (ff/1ff)         = 0
+                  at bottom:   ((ee+1) + fff0) & (ff/1ff)        = df
+     flipped,     at visible:  (~(f+1) + fff0 + 700) & (ff/1ff)  = df
+                  at bottom:   (~(ee+1) + fff0 + 700) & (ff/1ff) = 0
+
+   xexex (visible range f..10e, tilemap range 0..ff):
+     non-flipped, at visible:  ((f+1) + 7ff0) & (ff/1ff)          = 0
+                  at bottom:   ((10e+1) + 7ff0) & (ff/1ff)        = ff
+     flipped,     at visible:  (~(f+1) + 7ff0 + 720) & (ff/1ff)   = ff
+                  at bottom:   (~(10e+1) + 7ff0 + 720) & (ff/1ff) = 0
+
+   gijoe (visible range f..ee, tilemap range 10..ef):
+     non-flipped, at visible:  ((f+1) + 0) & (ff/1ff)         = 10
+                  at bottom:   ((ee+1) + 0) & (ff/1ff)        = ef
+     flipped,     at visible:  (~(f+1) + 0 + 700) & (ff/1ff)  = ef
+                  at bottom:   (~(ee+1) + 0 + 700) & (ff/1ff) = 10
+
+So, that works for the vertical position.
 
 
-  Linescroll:
 
-The linescroll is controlled by the register 0b, and uses the data in
-the ram bank pointed by register 31.  The data for tilemap <n> starts
-at offset 400*n in the bank for 1000 bytes ram banks, and 800*n+2 for
-2000 bytes ram banks.  The scrolling information is a vector of half
-words separated by 1 word padding for 2000 bytes banks.
-
-This is a source-oriented linescroll, i.e. the first word is
-associated to the first one of the tilemap, not matter what the
-current scrolly position is.
-
-In per-line mode, each word indicates the horizontal scroll of the
-associated line.  Global scrollx is ignored.
-
-In per-8 lines mode, each word associated to a line multiple of 8
-indicates the horizontal scroll for that line and the 7 following
-ones.  The other 7 words are ignored.  Global scrollx is ignored.
 
 */
-
 #include "k054156_k054157_k056832.h"
 
 const device_type K054156_054157 = &device_creator<k054156_054157_device>;
