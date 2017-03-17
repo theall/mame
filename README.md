@@ -7,8 +7,8 @@ Build status for tiny build only, containing just core parts of project
 
 | OS/Compiler        | Status           | 
 | ------------- |:-------------:| 
-|Linux GCC / OSX Clang| [![Build Status](https://travis-ci.org/mamedev/mame.svg?branch=master)](https://travis-ci.org/mamedev/mame) |
-|Windows MinGW | [![Build Status](https://tea-ci.org/api/badges/mamedev/mame/status.svg)](https://tea-ci.org/mamedev/mame) |
+|Linux GCC / OSX Clang| [![Build Status](https://travis-ci.org/theall/mame.svg?branch=master)](https://travis-ci.org/theall/mame) |
+|Windows MinGW | [![Build Status](https://tea-ci.org/api/badges/theall/mame/status.svg)](https://tea-ci.org/theall/mame) |
 
 
 What is MAME?
